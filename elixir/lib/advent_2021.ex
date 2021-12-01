@@ -38,7 +38,7 @@ defmodule Advent2021 do
   def solve(day, part, additional_args \\ []) do
     module = Module.concat(["Day#{day}"])
     fun = String.to_atom("part_#{part}")
-    input_file = "./lib/input/day_#{day}.txt"
+    input_file = "../input/day_#{day}.txt"
 
     apply(module, fun, [input_file | additional_args])
   end
