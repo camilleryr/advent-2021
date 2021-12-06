@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Solve do
       IO.ANSI.green(),
       "AOC Day #{day} / Part #{part}\n",
       "Results : #{result}\n",
-      "Executed in : #{time}ms\n",
+      "Executed in : #{System.convert_time_unit(time, :microsecond, :millisecond)}ms\n",
       IO.ANSI.reset()
     ])
   end
