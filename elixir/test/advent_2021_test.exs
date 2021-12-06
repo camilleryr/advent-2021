@@ -11,16 +11,23 @@ defmodule Advent2021Test do
     tag = String.to_atom(day)
 
     only =
-      System.argv()
-      |> Enum.filter(&String.contains?(&1, "part"))
-      |> Enum.map(fn part ->
-        {String.to_atom(part), 1}
-      end)
+      Application.get_env(:ex_unit, :include)
+      |> Enum.filter(fn atom -> atom |> to_string() |> String.contains?("part") end)
+      |> Enum.map(fn part -> {part, 1} end)
       |> case do
         [] -> []
         list -> [only: list]
       end
 
-    doctest module, [import: true, tags: tag] ++ only
+    except =
+      Application.get_env(:ex_unit, :exclude)
+      |> Enum.filter(fn atom -> atom |> to_string() |> String.contains?("part") end)
+      |> Enum.map(fn part -> {part, 1} end)
+      |> case do
+        [] -> []
+        list -> [except: list]
+      end
+
+    doctest module, [import: true, tags: tag] ++ only ++ except
   end)
 end
