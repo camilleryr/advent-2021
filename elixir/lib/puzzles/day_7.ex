@@ -57,12 +57,14 @@ defmodule Day7 do
     37
   """
   def_solution part_1(stream_input) do
-    stream_input
-    |> parse()
-    |> find_cheapest_position(&abs_distance/2)
+    do_solve(stream_input, &abs_distance/2)
   end
 
-  defp abs_distance(starting_position, destination) do
+  @doc ~S"""
+    iex> abs_distance(14, 2)
+    12
+  """
+  def abs_distance(starting_position, destination) do
     abs(starting_position - destination)
   end
 
@@ -103,15 +105,23 @@ defmodule Day7 do
     168
   """
   def_solution part_2(stream_input) do
-    stream_input
-    |> parse()
-    |> find_cheapest_position(&factorial_distance/2)
+    do_solve(stream_input, &triangle_distance/2)
   end
 
-  defp factorial_distance(starting_position, destination) do
+  @doc ~S"""
+    iex> triangle_distance(16, 5)
+    66
+  """
+  def triangle_distance(starting_position, destination) do
     distance = abs_distance(starting_position, destination)
 
     Enum.sum(1..distance)
+  end
+
+  defp do_solve(stream_input, fuel_calculator) do
+    stream_input
+    |> parse()
+    |> find_cheapest_position(&fuel_calculator.(&1, &2))
   end
 
   defp find_cheapest_position(frequencies, fuel_calculator) do
@@ -119,14 +129,20 @@ defmodule Day7 do
     |> Map.keys()
     |> Enum.min_max()
     |> then(fn {min, max} -> min..max end)
-    |> Enum.map(fn destination ->
-      frequencies
-      |> Enum.map(fn {starting_position, crabs} ->
-        fuel_calculator.(starting_position, destination) * crabs
-      end)
-      |> Enum.sum()
+    |> Enum.reduce_while(nil, fn destination, current_min ->
+      total =
+        frequencies
+        |> Enum.map(fn {starting_position, crabs} ->
+          fuel_calculator.(starting_position, destination) * crabs
+        end)
+        |> Enum.sum()
+
+      if total < current_min do
+        {:cont, total}
+      else
+        {:halt, current_min}
+      end
     end)
-    |> Enum.min()
   end
 
   defp parse(stream_input) do
