@@ -102,30 +102,58 @@ defmodule Day5 do
 
   defp do_solve(stream_input, filter \\ fn _ -> true end) do
     stream_input
-    |> Stream.map(&line_to_points/1)
-    |> Stream.filter(&filter.(&1))
-    |> Stream.flat_map(&build_line_segment/1)
-    |> Enum.frequencies()
-    |> Enum.filter(fn {_point, frequency} -> frequency > 1 end)
-    |> Enum.count()
+    |> Enum.map(&line_to_points/1)
+    |> Enum.filter(&filter.(&1))
+    |> Enum.reduce({MapSet.new(), MapSet.new()}, &find_dupes/2)
+    |> elem(1)
+    |> MapSet.size()
+  end
+
+  def find_dupes(segment, acc) do
+    segment
+    |> build_line_segment()
+    |> Enum.reduce(acc, fn point, {all_points, duped_points} ->
+      if MapSet.member?(all_points, point) do
+        {all_points, MapSet.put(duped_points, point)}
+      else
+        {MapSet.put(all_points, point), duped_points}
+      end
+    end)
   end
 
   @doc ~S"""
   ## Example
 
     iex> build_line_segment({{0, 9}, {5, 9}})
-    [{0, 9}, {1, 9}, {2, 9}, {3, 9}, {4, 9}, {5, 9}]
+    [{5, 9}, {4, 9}, {3, 9}, {2, 9}, {1, 9}, {0, 9}]
 
     iex> build_line_segment({{0, 0}, {2, 2}})
-    [{0, 0}, {1, 1}, {2, 2}]
+    [{2, 2}, {1, 1}, {0, 0}]
   """
-  def build_line_segment({{x1, y1}, {x2, y2}}) do
-    xs = x1..x2
-    ys = y1..y2
+  def build_line_segment({{x, y1}, {x, y2}}) do
+    end_point = {x, max(y1, y2)}
+    start_point = {x, min(y1, y2)}
+    build_line_segment_to(end_point, [start_point], fn {a, b} -> {a, b + 1} end)
+  end
 
-    Stream.cycle(xs)
-    |> Stream.zip(Stream.cycle(ys))
-    |> Enum.take(max(Range.size(xs), Range.size(ys)))
+  def build_line_segment({{x1, y}, {x2, y}}) do
+    end_point = {max(x1, x2), y}
+    start_point = {min(x1, x2), y}
+
+    build_line_segment_to(end_point, [start_point], fn {a, b} -> {a + 1, b} end)
+  end
+
+  def build_line_segment({p1, p2}) do
+    [{_, y1} = start_point, {_, y2} = end_point] = Enum.sort([p1, p2])
+    op = if y1 > y2, do: &Kernel.-(&1, 1), else: &Kernel.+(&1, 1)
+
+    build_line_segment_to(end_point, [start_point], fn {a, b} -> {a + 1, op.(b)} end)
+  end
+
+  def build_line_segment_to(end_point, [end_point | _rest] = points, _inc), do: points
+
+  def build_line_segment_to(end_point, [point | _rest] = points, incrementer) do
+    build_line_segment_to(end_point, [incrementer.(point) | points], incrementer)
   end
 
   @doc ~S"""
@@ -135,8 +163,10 @@ defmodule Day5 do
     {{0, 9}, {5, 9}}
   """
   def line_to_points(line) do
+    pattern = :binary.compile_pattern([",", " -> "])
+
     line
-    |> String.split([",", " -> "])
+    |> String.split(pattern)
     |> Enum.map(&String.to_integer/1)
     |> then(fn [x1, y1, x2, y2] -> {{x1, y1}, {x2, y2}} end)
   end
