@@ -42,4 +42,20 @@ defmodule Advent2021 do
 
     apply(module, fun, [input_file | additional_args])
   end
+
+  def print_grid(map) do
+    {{_x, max_y}, _} = Enum.max_by(map, fn {{_x, y}, _} -> y end)
+    {{max_x, _y}, _} = Enum.max_by(map, fn {{x, _y}, _} -> x end)
+
+    IO.puts("---------------------------------------")
+
+    for y <- 0..max_y, x <- 0..max_x do
+      if z = map[{x, y}], do: z, else: "-"
+    end
+    |> Enum.chunk_every(max_y + 1)
+    |> Enum.map(&Enum.join/1)
+    |> Enum.map(&IO.puts/1)
+
+    IO.puts("---------------------------------------")
+  end
 end
