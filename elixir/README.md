@@ -1,21 +1,33 @@
-# Elixir
+****
 
-**TODO: Add description**
+Advent Of Code 2021 Execution Times (in ms)
 
-## Installation
+Puzzles can be found [here](https://adventofcode.com/2021/)
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `elixir` to your list of dependencies in `mix.exs`:
+----
 
-```elixir
-def deps do
-  [
-    {:elixir, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/elixir](https://hexdocs.pm/elixir).
-
+| Day | Part | Execution Time |
+| --- | ---- | -------------- |
+| 1 | 1 | 26 ms|
+| 1 | 2 | 1 ms|
+| 2 | 1 | 2 ms|
+| 2 | 2 | 1 ms|
+| 3 | 1 | 7 ms|
+| 3 | 2 | 14 ms|
+| 4 | 1 | 35 ms|
+| 4 | 2 | 55 ms|
+| 5 | 1 | 155 ms|
+| 5 | 2 | 275 ms|
+| 6 | 1 | 1 ms|
+| 6 | 2 | 0 ms|
+| 7 | 1 | 14 ms|
+| 7 | 2 | 49 ms|
+| 8 | 1 | 5 ms|
+| 8 | 2 | 6 ms|
+| 9 | 1 | 21 ms|
+| 9 | 2 | 26 ms|
+| 10 | 1 | 17 ms|
+| 10 | 2 | 1 ms|
+| 11 | 1 | 7 ms|
+| 11 | 2 | 14 ms|
+||total|744 ms|
