@@ -98,8 +98,8 @@ defmodule Day12 do
     do_solve(stream_input, &any_small_caves_visited_twice/1)
   end
 
-  def any_small_caves_visited_twice(node_frequencies) do
-    Enum.any?(node_frequencies, fn {_key, freq} -> freq >= 2 end)
+  def any_small_caves_visited_twice({_visited, visited_again}) do
+    length(visited_again) > 0
   end
 
   @doc ~S"""
@@ -170,16 +170,8 @@ defmodule Day12 do
     do_solve(stream_input, &at_most_one_small_cave_visited_twice/1)
   end
 
-  def at_most_one_small_cave_visited_twice(node_frequencies) do
-    Enum.reduce_while(node_frequencies, false, fn
-      {_key, 1}, visited_twice -> {:cont, visited_twice}
-      {key, 2}, nil -> {:cont, key}
-      _, _ -> {:halt, :failed}
-    end)
-    |> case do
-      :failed -> true
-      _ -> false
-    end
+  def at_most_one_small_cave_visited_twice({_visited, visited_again}) do
+    length(visited_again) > 1
   end
 
   def do_solve(stream_input, rejector) do
@@ -191,7 +183,7 @@ defmodule Day12 do
     |> length()
   end
 
-  def get_paths(graph, paths \\ [{[:start], %{}}], rejector)
+  def get_paths(graph, paths \\ [{[:start], {MapSet.new(), []}}], rejector)
 
   def get_paths(graph, paths, rejector) do
     updated_paths = Enum.flat_map(paths, &expand(graph, &1, rejector))
@@ -207,7 +199,7 @@ defmodule Day12 do
     if completed?(path) do
       [path]
     else
-      next_nodes = graph |> :digraph.out_neighbours(last_node) |> Enum.reject(&(&1 == :start))
+      next_nodes = graph |> :digraph.out_neighbours(last_node)
 
       next_nodes
       |> Enum.map(fn next -> {[next | nodes], update_smalls_visited(smalls_visited, next)} end)
@@ -217,7 +209,14 @@ defmodule Day12 do
     end
   end
 
-  defp update_smalls_visited(visited, {key, :small}), do: Map.update(visited, key, 1, &(&1 + 1))
+  defp update_smalls_visited({visited, visited_again}, {key, :small}) do
+    if MapSet.member?(visited, key) do
+      {visited, [key | visited_again]}
+    else
+      {MapSet.put(visited, key), visited_again}
+    end
+  end
+
   defp update_smalls_visited(visited, _), do: visited
 
   defp completed?({[:end | _], _}), do: true
@@ -228,14 +227,16 @@ defmodule Day12 do
     |> Stream.map(fn line ->
       [start_node, end_node] = String.split(line, "-")
 
-      v1 = to_vertex(start_node)
-      v2 = to_vertex(end_node)
+      [v1, v2] = Enum.sort([to_vertex(start_node), to_vertex(end_node)])
 
       :digraph.add_vertex(graph, v1)
       :digraph.add_vertex(graph, v2)
 
       :digraph.add_edge(graph, v1, v2)
-      :digraph.add_edge(graph, v2, v1)
+
+      unless v1 == :start do
+        :digraph.add_edge(graph, v2, v1)
+      end
     end)
     |> Stream.run()
 
