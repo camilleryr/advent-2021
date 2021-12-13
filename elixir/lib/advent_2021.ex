@@ -43,18 +43,30 @@ defmodule Advent2021 do
     apply(module, fun, [input_file | additional_args])
   end
 
-  def print_grid(map) do
+  def print_grid(map, opts \\ []) do
+    transformer = Keyword.get(opts, :transformer, & &1)
+    output_file = Keyword.get(opts, :output_file)
+
     {{_x, max_y}, _} = Enum.max_by(map, fn {{_x, y}, _} -> y end)
     {{max_x, _y}, _} = Enum.max_by(map, fn {{x, _y}, _} -> x end)
 
+    {{_x, min_y}, _} = Enum.min_by(map, fn {{_x, y}, _} -> y end)
+    {{min_x, _y}, _} = Enum.min_by(map, fn {{x, _y}, _} -> x end)
+
     IO.puts("---------------------------------------")
 
-    for y <- 0..max_y, x <- 0..max_x do
-      if z = map[{x, y}], do: z, else: "-"
+    for y <- min_y..max_y, x <- min_x..max_x do
+      if z = map[{x, y}], do: transformer.(z), else: "-"
     end
-    |> Enum.chunk_every(max_y + 1)
+    |> Enum.chunk_every(max_x - min_x + 1)
     |> Enum.map(&Enum.join/1)
-    |> Enum.map(&IO.puts/1)
+    |> Enum.join("\n")
+    |> tap(fn output ->
+      if output_file do
+        File.write(output_file, output)
+      end
+    end)
+    |> IO.puts()
 
     IO.puts("---------------------------------------")
   end
