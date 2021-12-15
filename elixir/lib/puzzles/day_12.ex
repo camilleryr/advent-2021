@@ -98,9 +98,8 @@ defmodule Day12 do
     do_solve(stream_input, &any_small_caves_visited_twice/1)
   end
 
-  def any_small_caves_visited_twice({_visited, visited_again}) do
-    length(visited_again) > 0
-  end
+  def any_small_caves_visited_twice({_visited, []}), do: false
+  def any_small_caves_visited_twice(_), do: true
 
   @doc ~S"""
   --- Part Two ---
@@ -170,9 +169,9 @@ defmodule Day12 do
     do_solve(stream_input, &at_most_one_small_cave_visited_twice/1)
   end
 
-  def at_most_one_small_cave_visited_twice({_visited, visited_again}) do
-    length(visited_again) > 1
-  end
+  def at_most_one_small_cave_visited_twice({_visited, []}), do: false
+  def at_most_one_small_cave_visited_twice({_visited, [_]}), do: false
+  def at_most_one_small_cave_visited_twice(_), do: true
 
   def do_solve(stream_input, rejector) do
     graph = :digraph.new()
@@ -299,4 +298,3 @@ defmodule Day12 do
     """
   end
 end
-

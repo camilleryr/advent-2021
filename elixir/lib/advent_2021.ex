@@ -63,7 +63,7 @@ defmodule Advent2021 do
     |> Enum.join("\n")
     |> tap(fn output ->
       if output_file do
-        File.write(output_file, output)
+        File.write!(output_file, output)
       end
     end)
     |> IO.puts()
