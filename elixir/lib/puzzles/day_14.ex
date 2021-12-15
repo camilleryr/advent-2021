@@ -49,6 +49,7 @@ defmodule Day14 do
   Template:     NNCB
   After step 1: NCNBCHB
   After step 2: NBCCNBBBCBHCB
+
   After step 3: NBBBCNCCNBBNBNBBCHBHHBCHB
   After step 4: NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB
 
@@ -70,7 +71,8 @@ defmodule Day14 do
   def_solution part_1(stream_input) do
     stream_input
     |> parse()
-    |> recursively_replace(10)
+    |> Stream.iterate(&replace/1)
+    |> Enum.at(10)
     |> calculate_solution()
   end
 
@@ -90,59 +92,55 @@ defmodule Day14 do
   common element?
 
   ## Example
-    # iex> part_2(test_input())
-    # 2188189693529
+    iex> part_2(test_input())
+    2188189693529
   """
   def_solution part_2(stream_input) do
     stream_input
     |> parse()
-    |> recursively_replace(40)
+    |> Stream.iterate(&replace/1)
+    |> Enum.at(40)
     |> calculate_solution()
   end
 
   def calculate_solution(%{template: template}) do
     template
-    |> Enum.frequencies()
+    |> Enum.reduce(%{}, fn {[a, _b], x}, acc ->
+      Map.update(acc, a, x, &(&1 + x))
+    end)
+    |> Map.update(?B, 1, &(&1 + 1))
     |> Enum.min_max_by(fn {_key, val} -> val end)
-    |> IO.inspect()
     |> then(fn {{_min_key, min_val}, {_max_key, max_val}} ->
       max_val - min_val
     end)
-  end
-
-  def recursively_replace(%{iteration: times} = control, times), do: control
-
-  def recursively_replace(control, times) do
-    control
-    |> tap(&calculate_solution/1)
-    |> replace()
-    |> Map.update!(:iteration, &(&1 + 1))
-    |> recursively_replace(times)
   end
 
   def replace(%{template: template, rules: rules} = control) do
     %{control | template: do_replace(template, rules)}
   end
 
-  def do_replace([x | [y | _] = next], rules) do
-    if r = rules[{x, y}] do
-      [x, r | do_replace(next, rules)]
-    else
-      [x | do_replace(next, rules)]
-    end
-  end
+  def do_replace(template, rules) do
+    Enum.reduce(template, %{}, fn {[a, b] = pair, val}, next ->
+      addition = rules[pair]
 
-  def do_replace([x], _), do: [x]
+      next
+      |> Map.update([a, addition], val, &(&1 + val))
+      |> Map.update([addition, b], val, &(&1 + val))
+    end)
+  end
 
   def parse(stream_input) do
     stream_input
     |> Enum.map(fn
-      <<a, b, " -> ", c>> -> {{a, b}, c}
+      <<a, b, " -> ", c>> -> {[a, b], c}
       other -> to_charlist(other)
     end)
     |> Enum.split(1)
     |> then(fn {[template], rules} ->
-      struct(Control, template: template, rules: Map.new(rules))
+      struct(Control,
+        template: Enum.frequencies(Enum.chunk_every(template, 2, 1, :discard)),
+        rules: Map.new(rules)
+      )
     end)
   end
 
@@ -168,4 +166,3 @@ defmodule Day14 do
     """
   end
 end
-
