@@ -114,7 +114,7 @@ defmodule Day15 do
     unvisited = weight_map |> Map.keys() |> MapSet.new()
     distances = %{starting_point => 0}
 
-    dijkstra(starting_point, MapSet.new(), distances, unvisited, weight_map)
+    dijkstra(starting_point, :gb_trees.empty(), distances, unvisited, weight_map)
   end
 
   @empty MapSet.new()
@@ -133,26 +133,31 @@ defmodule Day15 do
         end)
       end)
 
-    updated_queue = Enum.reduce(neighbors, queue, &MapSet.put(&2, &1))
+    updated_queue = Enum.reduce(neighbors, queue, &put_queue(&2, updated_distances[&1], &1))
 
     updated_unvisited = MapSet.delete(unvisited, vertex)
 
     if MapSet.equal?(updated_unvisited, @empty) do
       distances
     else
-      {next_vertex, next_queue} = pop_queue(updated_queue, updated_distances)
+      {next_vertex, next_queue} = pop_queue(updated_queue)
 
       dijkstra(next_vertex, next_queue, updated_distances, updated_unvisited, weights)
     end
   end
 
-  def pop_queue(map_set, distances) do
-    val =
-      map_set
-      |> MapSet.to_list()
-      |> Enum.min_by(fn vertex -> distances[vertex] end)
+  def put_queue(tree, priority, value) do
+    key = {priority, value}
 
-    {val, MapSet.delete(map_set, val)}
+    case :gb_trees.lookup(key, tree) do
+      :none -> :gb_trees.insert(key, value, tree)
+      _ -> tree
+    end
+  end
+
+  def pop_queue(tree) do
+    {_, val, tree} = :gb_trees.take_smallest(tree)
+    {val, tree}
   end
 
   def neightbors({x, y}) do
