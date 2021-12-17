@@ -144,11 +144,10 @@ defmodule Day17 do
     45
   """
   def_solution part_1(stream_input) do
-    stream_input
-    |> parse()
-    |> find_hits()
-    |> Enum.max_by(fn {_, val} -> val end)
-    |> elem(1)
+    [_, y_range] = stream_input |> parse()
+    max_y = abs(y_range.last)
+
+    div(max_y * (max_y - 1), 2)
   end
 
   @doc ~s"""
@@ -190,9 +189,9 @@ defmodule Day17 do
     |> map_size()
   end
 
-  def find_hits([%{last: x2} = x_range, %{first: y1, last: y2} = y_range]) do
+  def find_hits([%{last: x2} = x_range, %{last: y2} = y_range]) do
     for x <- 0..x2,
-        y <- -250..250,
+        y <- y2..(y2 * -1),
         {:hit, highest} <- [hits_target(x, y, x_range, y_range)],
         into: %{} do
       {{x, y}, highest}
