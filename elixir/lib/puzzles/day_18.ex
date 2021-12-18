@@ -336,44 +336,37 @@ defmodule Day18 do
     iex> explode([[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]])
     [[3,[2,[8,0]]],[9,[5,[7,0]]]]
   """
-  def explode(n) when is_list(n) do
-    string = inspect(n, charlists: :as_lists)
-
-    case explode(string, 0) do
-      ^string ->
-        n
-
-      other ->
-        [front, x, y, back] = String.split(other, "*")
-        front = add_to_first_num(String.reverse(front), String.reverse(x)) |> String.reverse()
-        back = add_to_first_num(back, y)
-
-        {term, _} = Code.eval_string(front <> "0" <> back)
-        term
+  def explode(n) do
+    case explode(n, 0) do
+      {_, exploded, _} -> exploded
+      _ -> n
     end
   end
 
-  def explode(<<"[", rest::binary>>, depth) do
-    if depth == 4 do
-      [xy, rest] = String.split(rest, ~r/],?/, parts: 2)
-      [x, y] = String.split(xy, ["[", ", ", "]"], trim: true)
+  def explode([a, b], 4) do
+    {a, 0, b}
+  end
 
-      "*#{x}*#{y}*," <> rest
-    else
-      "[" <> explode(rest, depth + 1)
+  def explode([a, b], level) do
+    cond do
+      res = explode(a, level + 1) ->
+        {aa, n, ab} = res
+        {aa, [n, merge(ab, b)], 0}
+
+      res = explode(b, level + 1) ->
+        {ba, n, bb} = res
+        {0, [merge(a, ba), n], bb}
+
+      true ->
+        nil
     end
   end
 
-  def explode(<<"]", rest::binary>>, depth) do
-    "]" <> explode(rest, depth - 1)
-  end
+  def explode(_n, _level), do: false
 
-  def explode(<<a::binary-1, rest::binary>>, depth), do: a <> explode(rest, depth)
-  def explode("", _), do: ""
-
-  defp add_to_first_num(string, num) do
-    Regex.replace(~r/(\d+)/, string, "\\1 + #{num}", global: false)
-  end
+  def merge([a, b], n), do: [a, merge(b, n)]
+  def merge(n, [a, b]), do: [merge(n, a), b]
+  def merge(a, b), do: a + b
 
   @doc ~S"""
   ## Example
