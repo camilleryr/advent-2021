@@ -145,17 +145,20 @@ defmodule Day15 do
   end
 
   def put_queue(tree, priority, value) do
-    key = {priority, value}
-
-    case :gb_trees.lookup(key, tree) do
-      :none -> :gb_trees.insert(key, value, tree)
-      _ -> tree
+    case :gb_trees.take_any(priority, tree) do
+      {values, updated_tree} -> :gb_trees.insert(priority, [value | values], updated_tree)
+      _ -> :gb_trees.insert(priority, [value], tree)
     end
   end
 
   def pop_queue(tree) do
-    {_, val, tree} = :gb_trees.take_smallest(tree)
-    {val, tree}
+    case :gb_trees.take_smallest(tree) do
+      {_priority, [val], updated_tree} ->
+        {val, updated_tree}
+
+      {priority, [val | rest], updated_tree} ->
+        {val, :gb_trees.insert(priority, rest, updated_tree)}
+    end
   end
 
   def neightbors({x, y}) do
