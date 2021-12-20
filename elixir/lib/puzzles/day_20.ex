@@ -1,6 +1,38 @@
 defmodule Day20 do
   defmodule Control do
-    defstruct enhancement_algorithm: nil, image: nil, generation: 0
+    defstruct enhancement_algorithm: nil,
+              image: %{},
+              generation: 0,
+              min_x: 0,
+              max_x: 0,
+              min_y: 0,
+              max_y: 0
+
+    defimpl Collectable, for: Day20.Control do
+      def into(control) do
+        collector_fun = fn
+          control_acc, {:cont, {{x, y}, v}} ->
+            %{
+              control_acc
+              | image: Map.put(control_acc.image, {x, y}, v),
+                min_x: min(x, control_acc.min_x),
+                max_x: max(x, control_acc.max_x),
+                min_y: min(y, control_acc.min_y),
+                max_y: max(y, control_acc.max_y)
+            }
+
+          map_set_acc, :done ->
+            map_set_acc
+
+          _map_set_acc, :halt ->
+            :ok
+        end
+
+        initial_acc = control
+
+        {initial_acc, collector_fun}
+      end
+    end
   end
 
   import Advent2021
@@ -175,20 +207,20 @@ defmodule Day20 do
   def evolve(%{generation: generations} = control, generations), do: control
 
   def evolve(control, generations) do
-    for point <- get_point_to_evolve(control.image),
-        next <- [get_next(point, control)],
-        into: Map.new() do
-      {point, next}
+    for point <- get_point_to_evolve(control),
+        into: struct(Control, enhancement_algorithm: control.enhancement_algorithm) do
+      {point, get_next(point, control)}
     end
     # |> tap(&Advent2021.print_grid(&1, transformer: fn _ -> "#" end))
-    |> then(fn updated_image ->
-      %{control | image: updated_image, generation: control.generation + 1}
-    end)
+    |> Map.put(:generation, control.generation + 1)
     |> evolve(generations)
   end
 
-  def get_point_to_evolve(image) do
-    for {point, _} <- image, neighbor <- neighbors(point), into: MapSet.new(), do: neighbor
+  def get_point_to_evolve(control) do
+    for x <- (control.min_x - 1)..(control.max_x + 1),
+        y <- (control.min_y - 1)..(control.max_y + 1) do
+      {x, y}
+    end
   end
 
   def get_next(point, control) do
@@ -222,16 +254,11 @@ defmodule Day20 do
       |> Enum.with_index()
       |> Map.new(fn {pixel, index} -> {index, pixel} end)
 
-    image =
-      for {line, y} <- Enum.with_index(input),
-          {pixel, x} <- Enum.with_index(line),
-          into: Map.new() do
-        {{x, y}, pixel}
-      end
-
-    # |> tap(&Advent2021.print_grid(&1, transformer: fn _ -> "#" end))
-
-    struct(Control, image: image, enhancement_algorithm: enhancement_algorithm)
+    for {line, y} <- Enum.with_index(input),
+        {pixel, x} <- Enum.with_index(line),
+        into: struct(Control, enhancement_algorithm: enhancement_algorithm) do
+      {{x, y}, pixel}
+    end
   end
 
   def test_input do
