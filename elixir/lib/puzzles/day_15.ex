@@ -111,17 +111,21 @@ defmodule Day15 do
   end
 
   def dijkstra(weight_map, starting_point) do
-    unvisited = weight_map |> Map.keys() |> MapSet.new()
     distances = %{starting_point => 0}
+    {destination, _} = Enum.max_by(weight_map, fn {{x, y}, _} -> x + y end)
 
-    dijkstra(starting_point, :gb_trees.empty(), distances, unvisited, weight_map)
+    dijkstra(starting_point, :gb_trees.empty(), distances, weight_map, destination)
   end
 
-  @empty MapSet.new()
+  def dijkstra(destination, _queue, distances, _weights, destination), do: distances
 
-  def dijkstra(vertex, queue, distances, unvisited, weights) do
+  def dijkstra(vertex, queue, distances, weights, destination) do
     current_distance = distances[vertex]
-    neighbors = vertex |> neightbors() |> Enum.filter(&MapSet.member?(unvisited, &1))
+
+    neighbors =
+      vertex
+      |> neightbors()
+      |> Enum.filter(fn p -> Map.has_key?(weights, p) and not Map.has_key?(distances, p) end)
 
     updated_distances =
       Enum.reduce(neighbors, distances, fn neightbor, d ->
@@ -135,15 +139,9 @@ defmodule Day15 do
 
     updated_queue = Enum.reduce(neighbors, queue, &put_queue(&2, updated_distances[&1], &1))
 
-    updated_unvisited = MapSet.delete(unvisited, vertex)
+    {next_vertex, next_queue} = pop_queue(updated_queue)
 
-    if MapSet.equal?(updated_unvisited, @empty) do
-      distances
-    else
-      {next_vertex, next_queue} = pop_queue(updated_queue)
-
-      dijkstra(next_vertex, next_queue, updated_distances, updated_unvisited, weights)
-    end
+    dijkstra(next_vertex, next_queue, updated_distances, weights, destination)
   end
 
   def put_queue(tree, priority, value) do
