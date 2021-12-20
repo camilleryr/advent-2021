@@ -199,7 +199,7 @@ defmodule Day20 do
     |> evolve(generations)
     |> then(fn %{image: image} ->
       image
-      |> Enum.filter(fn {_, pixel} -> pixel == ?# end)
+      |> Enum.filter(fn {_, pixel} -> pixel == 1 end)
       |> Enum.count()
     end)
   end
@@ -211,7 +211,6 @@ defmodule Day20 do
         into: struct(Control, enhancement_algorithm: control.enhancement_algorithm) do
       {point, get_next(point, control)}
     end
-    # |> tap(&Advent2021.print_grid(&1, transformer: fn _ -> "#" end))
     |> Map.put(:generation, control.generation + 1)
     |> evolve(generations)
   end
@@ -226,19 +225,12 @@ defmodule Day20 do
   def get_next(point, control) do
     point
     |> neighbors()
-    |> Enum.map(fn point ->
-      case Map.get(control.image, point, get_default(control)) do
-        ?. -> 0
-        ?# -> 1
-      end
-    end)
-    |> Enum.join()
-    |> String.to_integer(2)
-    |> then(fn int -> control.enhancement_algorithm[int] end)
+    |> Enum.map(&Map.get_lazy(control.image, &1, fn -> get_default(control) end))
+    |> then(fn binary_int -> control.enhancement_algorithm[binary_int] end)
   end
 
-  def get_default(%{enhancement_algorithm: %{0 => ?.}}), do: ?.
-  def get_default(%{generation: generation}), do: if(rem(generation, 2) == 0, do: ?., else: ?#)
+  def get_default(%{enhancement_algorithm: %{[0, 0, 0, 0, 0, 0, 0, 0, 0] => 0}}), do: 0
+  def get_default(%{generation: generation}), do: rem(generation, 2)
 
   def neighbors({x, y}) do
     for y_prime <- (y - 1)..(y + 1), x_prime <- (x - 1)..(x + 1) do
@@ -252,11 +244,17 @@ defmodule Day20 do
     enhancement_algorithm =
       enchancement
       |> Enum.with_index()
-      |> Map.new(fn {pixel, index} -> {index, pixel} end)
+      |> Map.new(fn {value, index} ->
+        pixel = if(value == ?#, do: 1, else: 0)
+        binary_index = Integer.digits(index, 2)
+
+        {List.duplicate(0, 9 - length(binary_index)) ++ binary_index, pixel}
+      end)
 
     for {line, y} <- Enum.with_index(input),
-        {pixel, x} <- Enum.with_index(line),
+        {value, x} <- Enum.with_index(line),
         into: struct(Control, enhancement_algorithm: enhancement_algorithm) do
+      pixel = if(value == ?#, do: 1, else: 0)
       {{x, y}, pixel}
     end
   end
