@@ -311,10 +311,7 @@ defmodule Day23 do
     %{{8, 1} => 1, {9, 1} => 2, {10, 1} => 3, {11, 1} => 4, {12, 1} => 5}
   """
   def get_open_spaces({x, y}, state, steps \\ 1, all \\ %{}) do
-    for x_prime <- (x - 1)..(x + 1),
-        y_prime <- (y - 1)..(y + 1),
-        x == x_prime or y == y_prime,
-        point = {x_prime, y_prime},
+    for point <- [{x, y - 1}, {x + 1, y}, {x, y + 1}, {x - 1, y}],
         nil == Map.get(state.board, point, :unset),
         false == Map.has_key?(all, point),
         reduce: all do
