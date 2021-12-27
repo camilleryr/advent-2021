@@ -226,6 +226,8 @@ defmodule Day25 do
     |> step()
   end
 
+  def part_2(_), do: nil
+
   @doc ~S"""
   ## Example
     iex> for s <- 1..5, do: test_input(0) |> parse() |> step(s) |> Map.get(:board)
@@ -514,4 +516,3 @@ defmodule Day25 do
     """
   end
 end
-
